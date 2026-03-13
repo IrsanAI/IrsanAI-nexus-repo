@@ -90,3 +90,46 @@ Run a weighted integration audit (architecture, operations, quality, UX):
 ```bash
 python scripts/integration_audit.py
 ```
+
+
+## Product roadmap & status tracking
+
+### Status legend
+- ✅ Done
+- 🟡 In progress
+- ⚪ Planned
+- 🔁 Ongoing/iterative
+
+### Current integration snapshot (delta view)
+- **Before latest phase:** Analyze API + persisted reports + compare + HTML report + Insight Console baseline.
+- **Now (current merged state):** Delta heatmap in compare workflow, report compare endpoint, integration audit still at **100/100 (A)**.
+- **Next target:** move from JSON-centric inspection toward high-dimensional insight navigation (2.5D graph + drilldowns), while keeping additive APIs and schema stability.
+
+### Main roadmap phases
+| Phase | Goal | Status | Notes |
+|---|---|---|---|
+| A | Insight cockpit for non-coders | ✅ | KPI cards, report browser, compare + delta heatmap in place. |
+| B | 2.5D relationship graph | 🟡 | Next implementation step; begin with node/edge projection in 2D/2.5D. |
+| C | Human-in-the-loop LLM workspace | ⚪ | Prompt builder + response ingest + memory planned after graph foundations. |
+
+### Main tasks / sub-tasks tracker
+| Track | Sub-task | Status | Why it matters |
+|---|---|---|---|
+| Reports | Persistent report storage + listing | ✅ | Enables historical analysis and reproducibility. |
+| Reports | Report compare API (`/reports/compare`) | ✅ | Enables delta reasoning instead of isolated snapshots. |
+| Reports | HTML report view (`/reports/{id}/html`) | ✅ | Makes results easy to share with non-technical stakeholders. |
+| UX | Insight Console with KPI cards | ✅ | Fast understanding of repo health. |
+| UX | Delta heatmap visualization | ✅ | Quick visual interpretation of trend magnitude/direction. |
+| UX | Timeline view of report evolution | 🟡 | Partially present via recent reports; dedicated timeline UI pending. |
+| Graph | Data model for nodes/edges (files, risks, metrics) | ⚪ | Required for high-dimensional navigation. |
+| Graph | 2.5D canvas rendering + zoom/pan/filter | ⚪ | Core bridge toward immersive interaction without full 3D complexity. |
+| AI Loop | Prompt workbench (provider-neutral) | ⚪ | Supports external LLM augmentation workflow. |
+| AI Loop | LLM response ingest + semantic diff | ⚪ | Turns one-shot outputs into iterative intelligence growth. |
+| Platform | Integration audit script maintenance | 🔁 | Keeps roadmap delivery aligned with architecture integrity. |
+| Platform | CI + security checks (`ruff`/`pytest`/`bandit`) | 🔁 | Prevents regressions while expanding UX complexity. |
+
+### Guardrails for upcoming work
+1. Keep APIs additive and non-breaking wherever possible.
+2. Keep `docs/index.html` synchronized with `frontend/index.html` for Pages parity.
+3. Version report schema before adding graph/prompt-memory payload sections.
+4. Re-run integration audit and tests for each roadmap increment.
