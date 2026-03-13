@@ -68,7 +68,7 @@
 <body>
   <main class="card">
     <h1>IRSAN AI Nexus — Repo Intelligence</h1>
-    <p class="subtitle">Analyze GitHub repositories with one click. This UI works locally and on GitHub Pages (via configurable API base URL).</p>
+    <p class="subtitle">Analyze GitHub repositories with one click. This UI works locally and on GitHub Pages (via configurable API base URL). Reports are persisted and can be fetched via /reports.</p>
     <form id="analyze-form">
       <input id="repo-url" value="https://github.com/psf/requests" placeholder="https://github.com/org/repo" required />
       <button id="analyze-btn" type="submit">Analyze</button>
@@ -104,7 +104,8 @@
         const data = await res.json();
         if (!res.ok) throw new Error(data.detail || `Request failed (${res.status})`);
         output.value = JSON.stringify(data, null, 2);
-        status.textContent = 'Done.';
+        const reportInfo = data.report_id ? ` Report ID: ${data.report_id}` : '';
+        status.textContent = `Done.${reportInfo}`;
       } catch (error) {
         status.className = 'status error';
         status.textContent = `Error: ${error.message}`;

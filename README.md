@@ -3,7 +3,7 @@
 IRSAN AI Nexus analyzes GitHub repositories and returns a unified intelligence payload (languages, repo IQ, security indicators, and context-rich file snippets).
 
 ## Highlights
-- FastAPI backend with `/health` and `/analyze` endpoints.
+- FastAPI backend with `/health`, `/analyze`, and `/reports` endpoints.
 - Safe GitHub cloning with URL validation.
 - Windows-friendly cleanup handling for locked `.git/objects/pack/*` files.
 - Lightweight web UI at `/` for direct analysis runs.
@@ -26,7 +26,19 @@ Then open:
 ```bash
 curl -X POST http://127.0.0.1:8000/analyze \
   -H "Content-Type: application/json" \
-  -d '{"repo_url":"https://github.com/psf/requests"}'
+  -d '{"repo_url":"https://github.com/psf/requests","save_report":true}'
+```
+
+List recent reports:
+```bash
+curl http://127.0.0.1:8000/reports
+```
+
+Fetch one report by id:
+Reports are stored under `reports_output/` by default (configurable via `REPORTS_DIR`).
+
+```bash
+curl http://127.0.0.1:8000/reports/<report_id>
 ```
 
 ## Windows reliability notes

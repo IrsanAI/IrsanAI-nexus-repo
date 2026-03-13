@@ -5,10 +5,12 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from backend.api.routes_analyze import router as analyze_router
+from backend.api.routes_reports import router as reports_router
 from backend.config import settings
 
 app = FastAPI(title=settings.app_name)
 app.include_router(analyze_router)
+app.include_router(reports_router)
 
 frontend_dir = Path('frontend')
 
