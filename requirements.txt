@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+pydantic-settings
+click
+requests
+radon
+bandit
+pytest
+ruff
