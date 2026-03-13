@@ -43,3 +43,9 @@ WORK_DIR=./repo_work
 Workflow unter `.github/workflows/pages.yml`. Nach Aktivierung von GitHub Pages (Quelle: GitHub Actions) wird bei Push auf `main` automatisch `docs/index.html` deployed.
 
 Um die gehostete UI mit deiner API zu verbinden: `?api=https://dein-api-host` an die URL anhängen.
+
+## Preflight-Vergleich lokal/remote
+Erzeuge in PyCharm/lokal ein deterministisches JSON-Inventar und teile es für Delta-Analyse:
+```bash
+python scripts/preflight_inventory.py --output preflight.local.json
+```
