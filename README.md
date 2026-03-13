@@ -74,3 +74,9 @@ Generate a deterministic JSON inventory in PyCharm/local and share it for delta 
 ```bash
 python scripts/preflight_inventory.py --output preflight.local.json
 ```
+
+## Integration audit
+Run a weighted integration audit (architecture, operations, quality, UX):
+```bash
+python scripts/integration_audit.py
+```
