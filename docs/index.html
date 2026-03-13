@@ -14,6 +14,7 @@
       --accent: #6de4ff;
       --accent-2: #887bff;
       --danger: #ff8ba7;
+      --ok: #80ffbf;
     }
     * { box-sizing: border-box; }
     body {
@@ -22,22 +23,20 @@
       background: radial-gradient(circle at 10% 10%, #16213f 0%, var(--bg) 45%), radial-gradient(circle at 90% 20%, #2b1263 0%, transparent 35%);
       font-family: Inter, Segoe UI, system-ui, sans-serif;
       color: var(--txt);
-      display: grid;
-      place-items: center;
-      padding: 2rem;
+      padding: 1.2rem;
     }
+    .layout { max-width: 1180px; margin: 0 auto; display: grid; gap: 1rem; }
     .card {
-      width: min(980px, 100%);
       background: var(--panel);
       border: 1px solid rgba(109, 228, 255, 0.2);
-      border-radius: 20px;
-      padding: 1.4rem;
+      border-radius: 16px;
+      padding: 1rem;
       backdrop-filter: blur(8px);
-      box-shadow: 0 12px 45px rgba(16, 15, 30, 0.55);
+      box-shadow: 0 8px 30px rgba(16, 15, 30, 0.45);
     }
-    h1 { margin-top: 0; font-size: 1.8rem; }
-    .subtitle { color: var(--muted); margin-bottom: 1rem; }
-    form { display: grid; grid-template-columns: 1fr auto; gap: 0.7rem; }
+    h1 { margin: 0 0 .3rem; font-size: 1.6rem; }
+    .subtitle { color: var(--muted); margin: 0 0 1rem; }
+    form { display: grid; grid-template-columns: 1fr auto; gap: 0.6rem; }
     input, button, textarea {
       border-radius: 10px;
       border: 1px solid rgba(173, 203, 255, 0.25);
@@ -53,58 +52,140 @@
       color: #020713;
       font-weight: 700;
     }
-    button:disabled { opacity: 0.7; cursor: progress; }
-    .status { margin: 0.8rem 0; color: var(--muted); }
+    .status { margin: 0.7rem 0 0; color: var(--muted); }
     .status.error { color: var(--danger); }
-    textarea {
-      width: 100%;
-      min-height: 440px;
-      margin-top: 0.7rem;
-      resize: vertical;
-      line-height: 1.45;
+    .status.ok { color: var(--ok); }
+    .insights { display: grid; gap: .7rem; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .kpi { border: 1px solid rgba(142,162,216,.28); border-radius: 12px; padding: .7rem; background: rgba(9,14,30,.75); }
+    .kpi .label { color: var(--muted); font-size: .86rem; }
+    .kpi .value { font-size: 1.2rem; font-weight: 700; }
+    .row { display:grid; grid-template-columns: 2fr 1fr; gap: 1rem; }
+    textarea { width: 100%; min-height: 320px; resize: vertical; line-height: 1.4; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { text-align: left; border-bottom: 1px solid rgba(142,162,216,.2); padding: .5rem .4rem; font-size: .92rem; }
+    a { color: var(--accent); }
+    .pill { display:inline-block; border:1px solid rgba(136,123,255,.5); border-radius:999px; padding:.15rem .55rem; margin-right:.3rem; color:#d4cdff; }
+    @media (max-width: 1000px) {
+      .insights { grid-template-columns: repeat(2, minmax(0,1fr)); }
+      .row { grid-template-columns: 1fr; }
+      form { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
-  <main class="card">
-    <h1>IRSAN AI Nexus — Repo Intelligence</h1>
-    <p class="subtitle">Analyze GitHub repositories with one click. This UI works locally and on GitHub Pages (via configurable API base URL). Reports are persisted and can be fetched via /reports.</p>
-    <form id="analyze-form">
-      <input id="repo-url" value="https://github.com/psf/requests" placeholder="https://github.com/org/repo" required />
-      <button id="analyze-btn" type="submit">Analyze</button>
-    </form>
-    <div class="status" id="status">Ready.</div>
-    <textarea id="output" readonly>{ "hint": "Analysis result will appear here." }</textarea>
-  </main>
+  <div class="layout">
+    <section class="card">
+      <h1>IRSAN AI Nexus — Insight Console</h1>
+      <p class="subtitle">Analyze repos, inspect KPIs, browse persisted reports, and open HTML reports.</p>
+      <form id="analyze-form">
+        <input id="repo-url" value="https://github.com/psf/requests" placeholder="https://github.com/org/repo" required />
+        <button id="analyze-btn" type="submit">Analyze</button>
+      </form>
+      <div class="status" id="status">Ready.</div>
+    </section>
+
+    <section class="card">
+      <div class="insights" id="insights-grid">
+        <div class="kpi"><div class="label">Repo IQ</div><div class="value" id="kpi-iq">—</div></div>
+        <div class="kpi"><div class="label">Commits</div><div class="value" id="kpi-commits">—</div></div>
+        <div class="kpi"><div class="label">Security Issues</div><div class="value" id="kpi-security">—</div></div>
+        <div class="kpi"><div class="label">Languages</div><div class="value" id="kpi-languages">—</div></div>
+      </div>
+      <div id="language-pills" style="margin-top:.8rem"></div>
+    </section>
+
+    <section class="row">
+      <article class="card">
+        <h2 style="margin-top:0">Analysis JSON</h2>
+        <textarea id="output" readonly>{ "hint": "Analysis result will appear here." }</textarea>
+      </article>
+
+      <aside class="card">
+        <h2 style="margin-top:0">Recent Reports</h2>
+        <table>
+          <thead><tr><th>ID</th><th>Repo</th><th>HTML</th></tr></thead>
+          <tbody id="reports-body"><tr><td colspan="3">Loading...</td></tr></tbody>
+        </table>
+      </aside>
+    </section>
+  </div>
+
   <script>
     const form = document.getElementById('analyze-form');
     const repoUrl = document.getElementById('repo-url');
     const output = document.getElementById('output');
     const status = document.getElementById('status');
     const button = document.getElementById('analyze-btn');
+    const reportsBody = document.getElementById('reports-body');
+    const pills = document.getElementById('language-pills');
+
+    const kpiIq = document.getElementById('kpi-iq');
+    const kpiCommits = document.getElementById('kpi-commits');
+    const kpiSecurity = document.getElementById('kpi-security');
+    const kpiLanguages = document.getElementById('kpi-languages');
 
     const params = new URLSearchParams(window.location.search);
     const apiBase = params.get('api') || window.localStorage.getItem('IRSAN_API_BASE') || '';
     if (apiBase) window.localStorage.setItem('IRSAN_API_BASE', apiBase);
+
+    function endpoint(path) { return `${apiBase}${path}`; }
+
+    function renderInsights(data) {
+      const analysis = data.analysis || {};
+      const metrics = analysis.metrics || {};
+      const repoIq = (analysis.repo_iq || {}).metrics_iq || {};
+      const langs = analysis.languages || {};
+
+      kpiIq.textContent = repoIq.repo_iq ?? '—';
+      kpiCommits.textContent = metrics.commit_count ?? '—';
+      kpiSecurity.textContent = metrics.total_issues ?? '—';
+      kpiLanguages.textContent = metrics.language_count ?? Object.keys(langs).length ?? '—';
+
+      pills.innerHTML = Object.keys(langs).map((name) => `<span class="pill">${name}</span>`).join('') || '<span class="pill">No language data</span>';
+    }
+
+    async function loadReports() {
+      try {
+        const res = await fetch(endpoint('/reports?limit=12'));
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || 'Unable to load reports');
+        const items = data.items || [];
+        if (!items.length) {
+          reportsBody.innerHTML = '<tr><td colspan="3">No reports yet.</td></tr>';
+          return;
+        }
+        reportsBody.innerHTML = items.map((r) => {
+          const short = (r.id || '').slice(0, 14) + '…';
+          const repo = (r.repo_url || 'n/a').replace('https://github.com/', '');
+          const htmlHref = endpoint(`/reports/${encodeURIComponent(r.id)}/html`);
+          return `<tr><td title="${r.id}">${short}</td><td>${repo}</td><td><a target="_blank" href="${htmlHref}">open</a></td></tr>`;
+        }).join('');
+      } catch (error) {
+        reportsBody.innerHTML = `<tr><td colspan="3">Error: ${error.message}</td></tr>`;
+      }
+    }
 
     form.addEventListener('submit', async (event) => {
       event.preventDefault();
       button.disabled = true;
       status.className = 'status';
       status.textContent = 'Analyzing repository...';
-      output.value = '';
 
       try {
-        const endpoint = `${apiBase}/analyze`;
-        const res = await fetch(endpoint, {
+        const res = await fetch(endpoint('/analyze'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ repo_url: repoUrl.value.trim(), save_report: true })
+          body: JSON.stringify({ repo_url: repoUrl.value.trim(), save_report: true }),
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.detail || `Request failed (${res.status})`);
+
         output.value = JSON.stringify(data, null, 2);
+        renderInsights(data);
+        await loadReports();
+
         const reportInfo = data.report_id ? ` Report ID: ${data.report_id}` : '';
+        status.className = 'status ok';
         status.textContent = `Done.${reportInfo}`;
       } catch (error) {
         status.className = 'status error';
@@ -114,6 +195,8 @@
         button.disabled = false;
       }
     });
+
+    loadReports();
   </script>
 </body>
 </html>

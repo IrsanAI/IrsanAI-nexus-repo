@@ -7,7 +7,7 @@ IRSAN AI Nexus analyzes GitHub repositories and returns a unified intelligence p
 - Top-file snippets skip binary files to keep analysis output readable.
 - Safe GitHub cloning with URL validation.
 - Windows-friendly cleanup handling for locked `.git/objects/pack/*` files.
-- Lightweight web UI at `/` for direct analysis runs.
+- Lightweight Insight Console UI at `/` with KPI cards and recent report browser.
 - GitHub Pages-ready static site (from `docs/`).
 
 ## Quickstart (local)
@@ -52,6 +52,11 @@ Reports are stored under `reports_output/` by default (configurable via `REPORTS
 
 ```bash
 curl http://127.0.0.1:8000/reports/<report_id>
+```
+
+Open a human-friendly HTML report:
+```bash
+xdg-open http://127.0.0.1:8000/reports/<report_id>/html
 ```
 
 ## Windows reliability notes

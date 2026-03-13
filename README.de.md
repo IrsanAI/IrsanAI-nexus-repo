@@ -7,7 +7,7 @@ IRSAN AI Nexus analysiert GitHub-Repositories und liefert ein einheitliches Inte
 - Top-File-Snippets überspringen Binärdateien für besser lesbare Analyse-Ausgaben.
 - Sicheres GitHub-Klonen mit URL-Validierung.
 - Windows-robustes Cleanup für gesperrte `.git/objects/pack/*`-Dateien.
-- Leichte Web-UI unter `/` für direkte Analysen.
+- Leichte Insight-Console unter `/` mit KPI-Karten und Report-Browser.
 - GitHub-Pages-fähige statische Seite aus `docs/`.
 
 ## Schnellstart (lokal)
@@ -54,6 +54,11 @@ Reports werden standardmäßig unter `reports_output/` gespeichert (anpassbar ü
 curl http://127.0.0.1:8000/reports/<report_id>
 ```
 
+Einen lesbaren HTML-Report öffnen:
+```bash
+start http://127.0.0.1:8000/reports/<report_id>/html
+```
+
 ## Windows-Stabilität
 Wenn zuvor `WinError 5` beim Löschen auftrat, enthält das Repo jetzt:
 1. Ein temp-basiertes Standard-`work_dir` (`tempfile.gettempdir()`), und
@@ -73,13 +78,10 @@ Um die gehostete UI mit deiner API zu verbinden: `?api=https://dein-api-host` an
 Erzeuge in PyCharm/lokal ein deterministisches JSON-Inventar und teile es für Delta-Analyse:
 ```bash
 python scripts/preflight_inventory.py --output preflight.local.json
-<<<<<<< codex/optimize-repository-setup-and-configurations-725rf7
 ```
 
 ## Integrations-Audit
 Führe ein gewichtetes Integrations-Audit aus (Architektur, Betrieb, Qualität, UX):
 ```bash
 python scripts/integration_audit.py
-=======
->>>>>>> main
 ```
