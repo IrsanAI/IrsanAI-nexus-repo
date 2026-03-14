@@ -42,8 +42,10 @@ uvicorn backend.main:app --reload --port 8000
 # produktionsnaher Container
 docker compose -f docker/docker-compose.yml up --build -d backend
 
-# UI öffnen
-start http://127.0.0.1:8000/
+# UI öffnen (je nach Betriebssystem)
+# Linux: xdg-open http://127.0.0.1:8000/
+# macOS: open http://127.0.0.1:8000/
+# Windows PowerShell: Start-Process http://127.0.0.1:8000/
 
 # Dev-Profil mit Reload auf Port 8001
 docker compose -f docker/docker-compose.yml --profile dev up --build backend-dev
@@ -77,14 +79,18 @@ curl http://127.0.0.1:8000/reports/<report_id>
 
 Einen lesbaren HTML-Report öffnen:
 ```bash
-start http://127.0.0.1:8000/reports/<report_id>/html
+# Linux: xdg-open http://127.0.0.1:8000/reports/<report_id>/html
+# macOS: open http://127.0.0.1:8000/reports/<report_id>/html
+# Windows PowerShell: Start-Process http://127.0.0.1:8000/reports/<report_id>/html
 ```
 
 ## Windows-Stabilität
 Wenn zuvor `WinError 5` beim Löschen auftrat, enthält das Repo jetzt:
-1. Ein temp-basiertes Standard-`work_dir` (`tempfile.gettempdir()`), und
-2. Retry + chmod-basiertes Cleanup.
+1. Ein temp-basiertes Standard-`work_dir` (`tempfile.gettempdir()`),
+2. Retry + chmod-basiertes Cleanup, und
+3. einen Fallback auf ein schreibbares Workdir (konfiguriertes `WORK_DIR` → System-Temp → lokales `.irsanai-nexus-work`).
 
+Falls deine `.env` noch auf einen ungültigen Unix-Pfad unter Windows zeigt (z. B. `WORK_DIR=/tmp/...`), fällt die App jetzt automatisch zurück.
 Optional in `.env` überschreiben:
 ```dotenv
 WORK_DIR=./repo_work

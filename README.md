@@ -42,8 +42,10 @@ uvicorn backend.main:app --reload --port 8000
 # production-like container
 docker compose -f docker/docker-compose.yml up --build -d backend
 
-# open UI
-xdg-open http://127.0.0.1:8000/
+# open UI (choose your OS command)
+# Linux: xdg-open http://127.0.0.1:8000/
+# macOS: open http://127.0.0.1:8000/
+# Windows PowerShell: Start-Process http://127.0.0.1:8000/
 
 # dev profile with reload on port 8001
 docker compose -f docker/docker-compose.yml --profile dev up --build backend-dev
@@ -77,15 +79,19 @@ curl http://127.0.0.1:8000/reports/<report_id>
 
 Open a human-friendly HTML report:
 ```bash
-xdg-open http://127.0.0.1:8000/reports/<report_id>/html
+# Linux: xdg-open http://127.0.0.1:8000/reports/<report_id>/html
+# macOS: open http://127.0.0.1:8000/reports/<report_id>/html
+# Windows PowerShell: Start-Process http://127.0.0.1:8000/reports/<report_id>/html
 ```
 
 ## Windows reliability notes
 If you previously saw `WinError 5` during cleanup, this repo now uses:
-1. A temp-based default work directory (`tempfile.gettempdir()`), and
-2. Retry + chmod-based directory cleanup.
+1. A temp-based default work directory (`tempfile.gettempdir()`),
+2. Retry + chmod-based directory cleanup, and
+3. A writable-workdir fallback (configured `WORK_DIR` → system temp → local `.irsanai-nexus-work`).
 
-You can still override the workspace in `.env`:
+If your `.env` still points to an invalid Unix path on Windows (e.g. `WORK_DIR=/tmp/...`), the app now falls back automatically.
+You can still override the workspace explicitly in `.env`:
 ```dotenv
 WORK_DIR=./repo_work
 ```

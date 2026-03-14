@@ -3,6 +3,7 @@ import re
 import shutil
 import stat
 import subprocess
+import tempfile
 import time
 import uuid
 from pathlib import Path
@@ -12,6 +13,39 @@ from backend.config import settings
 
 class ClonerError(Exception):
     pass
+
+
+def _is_writable_dir(path: Path) -> bool:
+    try:
+        path.mkdir(parents=True, exist_ok=True)
+        probe = path / '.write_probe'
+        probe.write_text('ok', encoding='utf-8')
+        probe.unlink(missing_ok=True)
+        return True
+    except OSError:
+        return False
+
+
+def _resolve_work_dir() -> Path:
+    configured = settings.work_dir
+    candidates = [
+        configured,
+        Path(tempfile.gettempdir()) / 'irsanai-nexus-work',
+        Path.cwd() / '.irsanai-nexus-work',
+    ]
+
+    seen: set[Path] = set()
+    for candidate in candidates:
+        if candidate in seen:
+            continue
+        seen.add(candidate)
+        if _is_writable_dir(candidate):
+            return candidate
+
+    raise ClonerError(
+        'Kein schreibbares Arbeitsverzeichnis gefunden. '
+        f'Geprüft: {", ".join(str(c) for c in candidates)}'
+    )
 
 
 def validate_github_url(url: str) -> str:
@@ -44,8 +78,8 @@ def _safe_rmtree(path: Path, attempts: int = 5, delay_seconds: float = 0.2) -> N
 def clone_repo(url: str, job_id: str | None = None) -> Path:
     url = validate_github_url(url)
     job_id = job_id or str(uuid.uuid4())[:8]
-    target = settings.work_dir / job_id
-    settings.work_dir.mkdir(parents=True, exist_ok=True)
+    work_dir = _resolve_work_dir()
+    target = work_dir / job_id
     if target.exists():
         _safe_rmtree(target)
 
