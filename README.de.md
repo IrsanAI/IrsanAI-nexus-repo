@@ -35,6 +35,21 @@ uvicorn backend.main:app --reload --port 8000
 
 > Hinweis: `&&` und `source` sind Bash-Befehle und funktionieren in PowerShell nicht.
 
+
+## Schnellstart (Docker)
+```bash
+# produktionsnaher Container
+docker compose -f docker/docker-compose.yml up --build -d backend
+
+# UI öffnen
+start http://127.0.0.1:8000/
+
+# Dev-Profil mit Reload auf Port 8001
+docker compose -f docker/docker-compose.yml --profile dev up --build backend-dev
+```
+
+Docker-Services persistieren Workdir und Reports über Named Volumes (`repo_work`, `reports`).
+
 ## API-Nutzung für Analyse
 ```bash
 curl -X POST http://127.0.0.1:8000/analyze \
@@ -102,7 +117,7 @@ python scripts/integration_audit.py
 
 ### Aktueller Integrations-Snapshot (Delta-Sicht)
 - **Vor der letzten Phase:** Analyze-API + persistente Reports + Compare + HTML-Report + Insight-Console-Basis.
-- **Jetzt (aktueller gemergter Stand):** Delta-Heatmap im Compare-Workflow, Compare-Endpoint vorhanden, Integrations-Audit weiterhin bei **100/100 (A)**.
+- **Jetzt (aktueller gemergter Stand):** Delta-Heatmap im Compare-Workflow, Compare-Endpoint vorhanden, Docker-Runtime/Dev-Profil angeglichen, Integrations-Audit bei **100/100 (A)**.
 - **Nächstes Ziel:** von JSON-zentrierter Inspektion zu hochdimensionaler Insight-Navigation (2.5D-Graph + Drilldowns), bei stabilen/additiven APIs.
 
 ### Hauptphasen der Roadmap
@@ -127,6 +142,7 @@ python scripts/integration_audit.py
 | AI-Loop | LLM-Response-Ingest + semantischer Diff | ⚪ | Macht aus One-shot-Ausgaben iteratives Intelligence-Wachstum. |
 | Plattform | Pflege des Integrations-Audits | 🔁 | Hält Roadmap-Lieferungen architektonisch im Einklang. |
 | Plattform | CI + Security-Checks (`ruff`/`pytest`/`bandit`) | 🔁 | Verhindert Regressionen bei wachsender UX-Komplexität. |
+| Plattform | Docker-Parität (Runtime + Dev-Profil) | ✅ | Container-User erhalten denselben Kern-UX/API/Report-Stand. |
 
 ### Leitplanken für die nächsten Schritte
 1. APIs möglichst additiv und nicht-brechend erweitern.

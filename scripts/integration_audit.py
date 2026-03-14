@@ -69,10 +69,14 @@ def architecture_checks() -> list[CheckResult]:
 
 
 def operations_checks() -> list[CheckResult]:
+    dockerfile = _read('docker/Dockerfile.backend') if _exists('docker/Dockerfile.backend') else ''
+    compose = _read('docker/docker-compose.yml') if _exists('docker/docker-compose.yml') else ''
     return [
         CheckResult('ci_workflow', 8, 8 if _exists('.github/workflows/ci.yml') else 0, 'CI workflow present.'),
         CheckResult('pages_workflow', 7, 7 if _exists('.github/workflows/pages.yml') else 0, 'Pages workflow present.'),
         CheckResult('powershell_setup', 5, 5 if _exists('scripts/setup.ps1') else 0, 'PowerShell setup script present.'),
+        CheckResult('dockerfile_frontend_copy', 4, 4 if 'COPY frontend/' in dockerfile else 0, 'Docker backend image includes frontend assets.'),
+        CheckResult('docker_compose_reports_volume', 3, 3 if '/app/reports_output' in compose else 0, 'Docker compose maps reports persistence volume.'),
     ]
 
 

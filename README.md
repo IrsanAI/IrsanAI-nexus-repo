@@ -35,6 +35,21 @@ uvicorn backend.main:app --reload --port 8000
 
 > Note: `&&` and `source` are bash commands and fail in PowerShell.
 
+
+## Quickstart (Docker)
+```bash
+# production-like container
+docker compose -f docker/docker-compose.yml up --build -d backend
+
+# open UI
+xdg-open http://127.0.0.1:8000/
+
+# dev profile with reload on port 8001
+docker compose -f docker/docker-compose.yml --profile dev up --build backend-dev
+```
+
+Docker services persist workspace and reports via named volumes (`repo_work`, `reports`).
+
 ## Analyze API usage
 ```bash
 curl -X POST http://127.0.0.1:8000/analyze \
@@ -102,7 +117,7 @@ python scripts/integration_audit.py
 
 ### Current integration snapshot (delta view)
 - **Before latest phase:** Analyze API + persisted reports + compare + HTML report + Insight Console baseline.
-- **Now (current merged state):** Delta heatmap in compare workflow, report compare endpoint, integration audit still at **100/100 (A)**.
+- **Now (current merged state):** Delta heatmap in compare workflow, report compare endpoint, Docker runtime/dev profile aligned, integration audit at **100/100 (A)**.
 - **Next target:** move from JSON-centric inspection toward high-dimensional insight navigation (2.5D graph + drilldowns), while keeping additive APIs and schema stability.
 
 ### Main roadmap phases
@@ -127,6 +142,7 @@ python scripts/integration_audit.py
 | AI Loop | LLM response ingest + semantic diff | ⚪ | Turns one-shot outputs into iterative intelligence growth. |
 | Platform | Integration audit script maintenance | 🔁 | Keeps roadmap delivery aligned with architecture integrity. |
 | Platform | CI + security checks (`ruff`/`pytest`/`bandit`) | 🔁 | Prevents regressions while expanding UX complexity. |
+| Platform | Docker parity (runtime + dev profile) | ✅ | Container users now get the same core UX/API/report behavior. |
 
 ### Guardrails for upcoming work
 1. Keep APIs additive and non-breaking wherever possible.
