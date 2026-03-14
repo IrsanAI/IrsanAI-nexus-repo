@@ -38,8 +38,9 @@ def _hash(rel: str) -> str:
 def architecture_checks() -> list[CheckResult]:
     main = _read('backend/main.py')
     analyze = _read('backend/api/routes_analyze.py')
+    reports = _read('backend/api/routes_reports.py')
 
-    checks = [
+    return [
         CheckResult(
             name='analyze_router_wired',
             max_points=10,
@@ -54,30 +55,37 @@ def architecture_checks() -> list[CheckResult]:
         ),
         CheckResult(
             name='analyze_cleanup_finally',
-            max_points=10,
-            points=10 if 'finally:' in analyze and 'cleanup_repo(repo_path)' in analyze else 0,
+            max_points=8,
+            points=8 if 'finally:' in analyze and 'cleanup_repo(repo_path)' in analyze else 0,
             detail='Analyze endpoint guarantees cleanup path.',
         ),
+        CheckResult(
+            name='reports_compare_endpoint',
+            max_points=7,
+            points=7 if "@router.get('/compare')" in reports else 0,
+            detail='Reports compare endpoint is available.',
+        ),
     ]
-    return checks
 
 
 def operations_checks() -> list[CheckResult]:
-    checks = [
+    dockerfile = _read('docker/Dockerfile.backend') if _exists('docker/Dockerfile.backend') else ''
+    compose = _read('docker/docker-compose.yml') if _exists('docker/docker-compose.yml') else ''
+    return [
         CheckResult('ci_workflow', 8, 8 if _exists('.github/workflows/ci.yml') else 0, 'CI workflow present.'),
         CheckResult('pages_workflow', 7, 7 if _exists('.github/workflows/pages.yml') else 0, 'Pages workflow present.'),
         CheckResult('powershell_setup', 5, 5 if _exists('scripts/setup.ps1') else 0, 'PowerShell setup script present.'),
+        CheckResult('dockerfile_frontend_copy', 4, 4 if 'COPY frontend/' in dockerfile else 0, 'Docker backend image includes frontend assets.'),
+        CheckResult('docker_compose_reports_volume', 3, 3 if '/app/reports_output' in compose else 0, 'Docker compose maps reports persistence volume.'),
     ]
-    return checks
 
 
 def quality_checks() -> list[CheckResult]:
-    checks = [
+    return [
         CheckResult('tests_present', 10, 10 if _exists('tests/test_unified_analyzer_top_files.py') else 0, 'Critical analyzer tests present.'),
         CheckResult('report_store_present', 6, 6 if _exists('backend/analyzer/report_store.py') else 0, 'Report persistence module present.'),
         CheckResult('runtime_ignored', 4, 4 if 'reports_output/' in _read('.gitignore') else 0, 'Runtime report output ignored in git.'),
     ]
-    return checks
 
 
 def ux_checks() -> list[CheckResult]:
@@ -86,12 +94,11 @@ def ux_checks() -> list[CheckResult]:
 
     docs_frontend_match = _hash('docs/index.html') == _hash('frontend/index.html')
 
-    checks = [
+    return [
         CheckResult('windows_docs_en', 6, 6 if 'Quickstart (Windows / PowerShell)' in readme else 0, 'Windows onboarding documented (EN).'),
         CheckResult('windows_docs_de', 6, 6 if 'Schnellstart (Windows / PowerShell)' in readme_de else 0, 'Windows onboarding documented (DE).'),
         CheckResult('docs_frontend_sync', 8, 8 if docs_frontend_match else 0, 'docs/index.html is in sync with frontend/index.html.'),
     ]
-    return checks
 
 
 def main() -> None:

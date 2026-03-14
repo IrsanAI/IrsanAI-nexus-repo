@@ -37,7 +37,8 @@
     h1 { margin: 0 0 .3rem; font-size: 1.6rem; }
     .subtitle { color: var(--muted); margin: 0 0 1rem; }
     form { display: grid; grid-template-columns: 1fr auto; gap: 0.6rem; }
-    input, button, textarea {
+    .inline-grid { display: grid; grid-template-columns: 1fr 1fr auto; gap: 0.5rem; }
+    input, button, textarea, select {
       border-radius: 10px;
       border: 1px solid rgba(173, 203, 255, 0.25);
       background: rgba(7, 12, 28, 0.8);
@@ -61,6 +62,13 @@
     .kpi .value { font-size: 1.2rem; font-weight: 700; }
     .row { display:grid; grid-template-columns: 2fr 1fr; gap: 1rem; }
     textarea { width: 100%; min-height: 320px; resize: vertical; line-height: 1.4; }
+    .small { min-height: 200px; }
+    .heatmap-grid { margin-top:.8rem; display:grid; gap:.4rem; }
+    .heat-row { display:grid; grid-template-columns: 140px 1fr 72px; gap:.6rem; align-items:center; }
+    .heat-label { color: var(--muted); font-size:.86rem; }
+    .heat-track { height: 14px; border-radius:999px; background: rgba(122,144,190,.2); overflow:hidden; }
+    .heat-bar { height:100%; }
+    .heat-value { font-variant-numeric: tabular-nums; text-align:right; }
     table { width: 100%; border-collapse: collapse; }
     th, td { text-align: left; border-bottom: 1px solid rgba(142,162,216,.2); padding: .5rem .4rem; font-size: .92rem; }
     a { color: var(--accent); }
@@ -69,6 +77,7 @@
       .insights { grid-template-columns: repeat(2, minmax(0,1fr)); }
       .row { grid-template-columns: 1fr; }
       form { grid-template-columns: 1fr; }
+      .inline-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -76,7 +85,7 @@
   <div class="layout">
     <section class="card">
       <h1>IRSAN AI Nexus — Insight Console</h1>
-      <p class="subtitle">Analyze repos, inspect KPIs, browse persisted reports, and open HTML reports.</p>
+      <p class="subtitle">Analyze repos, inspect KPIs, compare reports (delta view), and open HTML reports.</p>
       <form id="analyze-form">
         <input id="repo-url" value="https://github.com/psf/requests" placeholder="https://github.com/org/repo" required />
         <button id="analyze-btn" type="submit">Analyze</button>
@@ -92,6 +101,17 @@
         <div class="kpi"><div class="label">Languages</div><div class="value" id="kpi-languages">—</div></div>
       </div>
       <div id="language-pills" style="margin-top:.8rem"></div>
+    </section>
+
+    <section class="card">
+      <h2 style="margin-top:0">Compare Reports (Delta)</h2>
+      <div class="inline-grid">
+        <select id="compare-id1"></select>
+        <select id="compare-id2"></select>
+        <button id="compare-btn" type="button">Compare</button>
+      </div>
+      <textarea class="small" id="compare-output" readonly>{ "hint": "Comparison delta appears here." }</textarea>
+      <div class="heatmap-grid" id="delta-heatmap"></div>
     </section>
 
     <section class="row">
@@ -114,10 +134,15 @@
     const form = document.getElementById('analyze-form');
     const repoUrl = document.getElementById('repo-url');
     const output = document.getElementById('output');
+    const compareOutput = document.getElementById('compare-output');
     const status = document.getElementById('status');
     const button = document.getElementById('analyze-btn');
+    const compareBtn = document.getElementById('compare-btn');
     const reportsBody = document.getElementById('reports-body');
     const pills = document.getElementById('language-pills');
+    const compareId1 = document.getElementById('compare-id1');
+    const compareId2 = document.getElementById('compare-id2');
+    const deltaHeatmap = document.getElementById('delta-heatmap');
 
     const kpiIq = document.getElementById('kpi-iq');
     const kpiCommits = document.getElementById('kpi-commits');
@@ -144,14 +169,23 @@
       pills.innerHTML = Object.keys(langs).map((name) => `<span class="pill">${name}</span>`).join('') || '<span class="pill">No language data</span>';
     }
 
+    function fillCompareSelects(items) {
+      const options = items.map((r) => `<option value="${r.id}">${r.id}</option>`).join('');
+      compareId1.innerHTML = options;
+      compareId2.innerHTML = options;
+      if (items.length > 1) compareId2.selectedIndex = 1;
+    }
+
     async function loadReports() {
       try {
-        const res = await fetch(endpoint('/reports?limit=12'));
+        const res = await fetch(endpoint('/reports?limit=20'));
         const data = await res.json();
         if (!res.ok) throw new Error(data.detail || 'Unable to load reports');
         const items = data.items || [];
         if (!items.length) {
           reportsBody.innerHTML = '<tr><td colspan="3">No reports yet.</td></tr>';
+          compareId1.innerHTML = '<option>No reports</option>';
+          compareId2.innerHTML = '<option>No reports</option>';
           return;
         }
         reportsBody.innerHTML = items.map((r) => {
@@ -160,9 +194,64 @@
           const htmlHref = endpoint(`/reports/${encodeURIComponent(r.id)}/html`);
           return `<tr><td title="${r.id}">${short}</td><td>${repo}</td><td><a target="_blank" href="${htmlHref}">open</a></td></tr>`;
         }).join('');
+        fillCompareSelects(items);
       } catch (error) {
         reportsBody.innerHTML = `<tr><td colspan="3">Error: ${error.message}</td></tr>`;
       }
+    }
+
+    compareBtn.addEventListener('click', async () => {
+      const id1 = compareId1.value;
+      const id2 = compareId2.value;
+      if (!id1 || !id2) return;
+      compareBtn.disabled = true;
+      try {
+        const res = await fetch(endpoint(`/reports/compare?id1=${encodeURIComponent(id1)}&id2=${encodeURIComponent(id2)}`));
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || 'Compare failed');
+        compareOutput.value = JSON.stringify(data, null, 2);
+        renderHeatmap(data.comparison || {});
+      } catch (error) {
+        compareOutput.value = JSON.stringify({ error: error.message }, null, 2);
+        deltaHeatmap.innerHTML = '';
+      } finally {
+        compareBtn.disabled = false;
+      }
+    });
+
+    function colorForDelta(value) {
+      if (value > 0) return 'linear-gradient(90deg,#60f5b5,#2fc0ff)';
+      if (value < 0) return 'linear-gradient(90deg,#ff9cab,#ff6f91)';
+      return 'linear-gradient(90deg,#97a8d6,#7f8fb7)';
+    }
+
+    function renderHeatmap(comparison) {
+      const deltas = [];
+      const metricDeltas = comparison.metric_deltas || {};
+      Object.entries(metricDeltas).forEach(([key, obj]) => {
+        deltas.push({ label: key, delta: Number(obj.delta || 0) });
+      });
+      if ((comparison.repo_iq_delta || {}).delta !== undefined) {
+        deltas.push({ label: 'repo_iq', delta: Number(comparison.repo_iq_delta.delta || 0) });
+      }
+
+      if (!deltas.length) {
+        deltaHeatmap.innerHTML = '';
+        return;
+      }
+
+      const maxAbs = Math.max(...deltas.map((d) => Math.abs(d.delta)), 1);
+      deltaHeatmap.innerHTML = deltas.map((d) => {
+        const width = Math.max(6, Math.round((Math.abs(d.delta) / maxAbs) * 100));
+        const sign = d.delta > 0 ? '+' : '';
+        return `
+          <div class="heat-row">
+            <div class="heat-label">${d.label}</div>
+            <div class="heat-track"><div class="heat-bar" style="width:${width}%;background:${colorForDelta(d.delta)}"></div></div>
+            <div class="heat-value">${sign}${d.delta}</div>
+          </div>
+        `;
+      }).join('');
     }
 
     form.addEventListener('submit', async (event) => {

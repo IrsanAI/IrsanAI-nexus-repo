@@ -3,7 +3,7 @@ from html import escape
 from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import HTMLResponse
 
-from backend.analyzer.report_store import list_reports, load_report
+from backend.analyzer.report_store import compare_reports, list_reports, load_report
 
 router = APIRouter(prefix='/reports', tags=['reports'])
 
@@ -85,6 +85,17 @@ def _render_report_html(payload: dict, report_id: str) -> str:
 def get_reports(limit: int = Query(default=25, ge=1, le=200)):
     items = list_reports(limit=limit)
     return {'items': items, 'count': len(items)}
+
+
+@router.get('/compare')
+def compare_reports_endpoint(id1: str = Query(...), id2: str = Query(...)):
+    try:
+        report_1 = load_report(id1)
+        report_2 = load_report(id2)
+        diff = compare_reports(report_1, report_2)
+        return {'id1': id1, 'id2': id2, 'comparison': diff}
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
 
 
 @router.get('/{report_id}')
