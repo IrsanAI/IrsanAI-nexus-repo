@@ -8,6 +8,7 @@ IRSAN AI Nexus analysiert GitHub-Repositories und liefert ein einheitliches Inte
 - Sicheres GitHub-Klonen mit URL-Validierung.
 - Windows-robustes Cleanup für gesperrte `.git/objects/pack/*`-Dateien.
 - Leichte Insight-Console unter `/` mit KPI-Karten, Report-Vergleich, Delta-Heatmap und Report-Browser.
+- Multi-Provider-LLM-Relay-Adapter (OpenAI, Claude, Gemini, Grok, Mistral, DeepSeek, Qwen) mit modell-spezifischem Payload-Wrapping.
 - GitHub-Pages-fähige statische Seite aus `docs/`.
 
 ## Schnellstart (lokal)
@@ -142,7 +143,9 @@ python scripts/integration_audit.py
 | AI-Loop | LLM-Response-Ingest + semantischer Diff | ⚪ | Macht aus One-shot-Ausgaben iteratives Intelligence-Wachstum. |
 | Plattform | Pflege des Integrations-Audits | 🔁 | Hält Roadmap-Lieferungen architektonisch im Einklang. |
 | Plattform | CI + Security-Checks (`ruff`/`pytest`/`bandit`) | 🔁 | Verhindert Regressionen bei wachsender UX-Komplexität. |
+| Plattform | Clone-Timeout-Schutz (120s) | ✅ | Verhindert hängende Worker bei problematischen `git clone`-Vorgängen. |
 | Plattform | Docker-Parität (Runtime + Dev-Profil) | ✅ | Container-User erhalten denselben Kern-UX/API/Report-Stand. |
+| AI-Loop | LLM-Relay-Aktivierung (Adapter + Modell-Wrapping) | ✅ | Ermöglicht provider-spezifische Payload-Generierung ohne Import-/Runtime-Fehler. |
 
 ### Leitplanken für die nächsten Schritte
 1. APIs möglichst additiv und nicht-brechend erweitern.

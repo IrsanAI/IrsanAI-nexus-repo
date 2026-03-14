@@ -49,7 +49,18 @@ def clone_repo(url: str, job_id: str | None = None) -> Path:
     if target.exists():
         _safe_rmtree(target)
 
-    result = subprocess.run(['git', 'clone', '--depth=50', url, str(target)], capture_output=True, text=True)
+    try:
+        result = subprocess.run(
+            ['git', 'clone', '--depth=50', url, str(target)],
+            capture_output=True,
+            text=True,
+            timeout=120,
+        )
+    except subprocess.TimeoutExpired as exc:
+        if target.exists():
+            _safe_rmtree(target)
+        raise ClonerError(f'git clone Timeout (120s): {url}') from exc
+
     if result.returncode != 0:
         raise ClonerError(f'git clone fehlgeschlagen: {result.stderr}')
     return target
