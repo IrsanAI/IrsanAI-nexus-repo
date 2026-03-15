@@ -170,6 +170,7 @@
           <div id="graph-detail" class="meta">Klicke auf einen Knoten, um Details zu sehen.</div>
           <hr style="border-color:rgba(142,162,216,.22); margin: .7rem 0" />
           <div id="graph-stats" class="meta">Nodes: — | Edges: —</div>
+          <div id="graph-relations" class="meta" style="margin-top:.5rem">Relationen: —</div>
         </aside>
       </div>
     </section>
@@ -209,6 +210,7 @@
     const graphCanvas = document.getElementById('graph-canvas');
     const graphDetail = document.getElementById('graph-detail');
     const graphStats = document.getElementById('graph-stats');
+    const graphRelations = document.getElementById('graph-relations');
     const timelineSvg = document.getElementById('timeline-svg');
     const timelineEmpty = document.getElementById('timeline-empty');
     const timelineRepoFilter = document.getElementById('timeline-repo-filter');
@@ -374,6 +376,13 @@
       if ((comparison.repo_iq_delta || {}).delta !== undefined) {
         deltas.push({ label: 'repo_iq', delta: Number(comparison.repo_iq_delta.delta || 0) });
       }
+      const graphDelta = comparison.graph_delta || {};
+      if ((graphDelta.nodes || {}).delta !== undefined) {
+        deltas.push({ label: 'graph_nodes', delta: Number(graphDelta.nodes.delta || 0) });
+      }
+      if ((graphDelta.edges || {}).delta !== undefined) {
+        deltas.push({ label: 'graph_edges', delta: Number(graphDelta.edges.delta || 0) });
+      }
 
       if (!deltas.length) {
         deltaHeatmap.innerHTML = '';
@@ -435,9 +444,21 @@
         const nodes = currentGraph.nodes || [];
         const edges = currentGraph.edges || [];
         graphStats.textContent = `Nodes: ${nodes.length} | Edges: ${edges.length} | Schema: ${data.report_schema_version || '1.0.0'}`;
+        const relationCounts = edges.reduce((acc, e) => {
+          const rel = e.relation || 'unknown';
+          acc[rel] = (acc[rel] || 0) + 1;
+          return acc;
+        }, {});
+        const topRelations = Object.entries(relationCounts)
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 3)
+          .map(([k, v]) => `${k}: ${v}`)
+          .join(' | ');
+        graphRelations.textContent = topRelations ? `Relationen: ${topRelations}` : 'Relationen: —';
         renderGraph(nodes, edges);
       } catch (error) {
         graphCanvas.innerHTML = `<div class="meta">Fehler: ${error.message}</div>`;
+        graphRelations.textContent = 'Relationen: —';
       } finally {
         graphLoadBtn.disabled = false;
       }
