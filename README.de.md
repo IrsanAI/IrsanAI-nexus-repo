@@ -142,7 +142,7 @@ python scripts/integration_audit.py
 | Reports | HTML-Report-View (`/reports/{id}/html`) | ✅ | Ergebnisse leicht teilbar für nicht-technische Stakeholder. |
 | UX | Insight-Console mit KPI-Karten | ✅ | Schnelles Verständnis des Repo-Zustands. |
 | UX | Delta-Heatmap-Visualisierung | ✅ | Schnelle visuelle Interpretation von Trendrichtung/-stärke. |
-| UX | Timeline-View der Report-Entwicklung | 🟡 | Teilweise via Recent Reports vorhanden; eigene Timeline-UI noch offen. |
+| UX | Timeline-View der Report-Entwicklung | ✅ | SVG-Trendansicht (Repo IQ + Security Issues) mit optionalem Repo-Filter ist verfügbar. |
 | Graph | Datenmodell für Nodes/Edges (Dateien, Risiken, Metriken) | 🟡 | `insight_graph` + `/reports/{id}/graph` als v1-Basis eingeführt. |
 | Graph | 2.5D-Canvas mit Zoom/Pan/Filter | ⚪ | Brücke zu immersiver Interaktion ohne sofortige Full-3D-Komplexität. |
 | AI-Loop | Prompt-Workbench (provider-neutral) | ⚪ | Unterstützt externen LLM-Augmentation-Workflow. |

@@ -123,6 +123,11 @@
 
     <section class="card">
       <h2 style="margin-top:0">Timeline (Reports)</h2>
+      <div class="inline-grid" style="margin-bottom:.55rem">
+        <input id="timeline-repo-filter" placeholder="Optional: https://github.com/org/repo" />
+        <div class="meta" style="display:flex;align-items:center">Filtert Timeline + Reportliste</div>
+        <button id="timeline-apply-btn" type="button">Filter anwenden</button>
+      </div>
       <div class="timeline">
         <svg id="timeline-svg" viewBox="0 0 800 180" preserveAspectRatio="none"></svg>
       </div>
@@ -206,6 +211,8 @@
     const graphStats = document.getElementById('graph-stats');
     const timelineSvg = document.getElementById('timeline-svg');
     const timelineEmpty = document.getElementById('timeline-empty');
+    const timelineRepoFilter = document.getElementById('timeline-repo-filter');
+    const timelineApplyBtn = document.getElementById('timeline-apply-btn');
 
     const kpiIq = document.getElementById('kpi-iq');
     const kpiCommits = document.getElementById('kpi-commits');
@@ -244,7 +251,7 @@
 
 
     function renderTimeline(items) {
-      const ordered = [...(items || [])].reverse();
+      const ordered = [...(items || [])];
       const iqPoints = ordered.map((item) => Number(item.repo_iq)).filter((v) => Number.isFinite(v));
       const secPoints = ordered.map((item) => Number(item.total_issues)).filter((v) => Number.isFinite(v));
 
@@ -285,14 +292,22 @@
       timelineEmpty.textContent = `Punkte: ${ordered.length} (ältester → neuester Report)`;
     }
 
+
+    function buildTimelineQuery() {
+      const repo = (timelineRepoFilter.value || '').trim();
+      const params = new URLSearchParams({ limit: '40' });
+      if (repo) params.set('repo_url', repo);
+      return `/reports/timeline?${params.toString()}`;
+    }
+
     async function loadReports() {
       try {
-        const res = await fetch(endpoint('/reports?limit=20'));
+        const res = await fetch(endpoint(buildTimelineQuery()));
         const data = await res.json();
         if (!res.ok) throw new Error(data.detail || 'Unable to load reports');
         const items = data.items || [];
         if (!items.length) {
-          reportsBody.innerHTML = '<tr><td colspan="3">No reports yet.</td></tr>';
+          reportsBody.innerHTML = '<tr><td colspan="3">Keine Reports für diesen Filter.</td></tr>';
           compareId1.innerHTML = '<option>No reports</option>';
           compareId2.innerHTML = '<option>No reports</option>';
           graphReportId.innerHTML = '<option>No reports</option>';
@@ -300,19 +315,30 @@
           renderTimeline([]);
           return;
         }
-        reportsBody.innerHTML = items.map((r) => {
+        const displayItems = [...items].reverse();
+        reportsBody.innerHTML = displayItems.map((r) => {
           const short = (r.id || '').slice(0, 14) + '…';
           const repo = (r.repo_url || 'n/a').replace('https://github.com/', '');
           const htmlHref = endpoint(`/reports/${encodeURIComponent(r.id)}/html`);
           return `<tr><td title="${r.id}">${short}</td><td>${repo}</td><td><a target="_blank" href="${htmlHref}">open</a></td></tr>`;
         }).join('');
-        fillCompareSelects(items);
+        fillCompareSelects(displayItems);
         renderTimeline(items);
       } catch (error) {
         reportsBody.innerHTML = `<tr><td colspan="3">Error: ${error.message}</td></tr>`;
         renderTimeline([]);
       }
     }
+
+
+    timelineApplyBtn.addEventListener('click', async () => {
+      timelineApplyBtn.disabled = true;
+      try {
+        await loadReports();
+      } finally {
+        timelineApplyBtn.disabled = false;
+      }
+    });
 
     compareBtn.addEventListener('click', async () => {
       const id1 = compareId1.value;
